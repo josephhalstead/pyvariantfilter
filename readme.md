@@ -190,7 +190,7 @@ b) If include_denovo is True then one of the pair can be de_novo and the other i
 
 ### Install the Package
 
-`pip install pyvariantfilter ` TO DO
+`pip install pyvariantfilter `
 
 or
 
@@ -199,10 +199,6 @@ or
 ## Examples
 
 See the notebooks folder for some examples of using the library for WES and WGS analyses.
-
-## Documentation
-
-See the docs directory.
 
 ## Test
 
