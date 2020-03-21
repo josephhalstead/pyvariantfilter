@@ -352,6 +352,32 @@ class Variant:
 		else:
 			
 			return False
+
+	def is_homozygous(self, family_member_id):
+		"""
+		Is the family member homozygous for either the reference or alt allele?
+
+		Input:
+
+			family_member_id: family_member_id of a Family Member object.
+
+		Returns:
+
+			True: If family_member_id genotype has an allele count of 2 for either the reference or alt allele.
+			False: If family_member_id genotype does not have an allele count of 2 for either the reference or alt allele.
+
+		"""
+
+		if self.is_hom_ref(family_member_id) == True:
+
+			return True
+
+		if self.is_hom_alt(family_member_id) == True:
+
+			return True
+
+		return False
+
 	
 	def is_missing(self, family_member_id):
 		"""
@@ -1605,7 +1631,378 @@ class Variant:
 			raise ValueError('Variant does not have a a recognised workflow - is the proband homozygous reference?')
 
 
+	def matches_paternal_uniparental_ambiguous(self,  min_parental_gq=30, min_parental_depth=10):
+		"""
+		A type of mendelian error symptomatic of a UPD event.
+
+		Where the dad has allele AA and mum BB and child has AA
+
+		This could happen from either a heterodisomic or isodisomic event
+
+		"""
+
+		proband = self.family.get_proband()
+		
+		mum = proband.get_mum()
+		dad = proband.get_dad()
+
+		# Must have both parents to calculate
+		if mum == None or dad == None:
+				
+			return False
+
+		mum_id = mum.get_id()
+		dad_id = dad.get_id()
+		proband_id = proband.get_id()
+
+		mum_gq = self.get_genotype_quality(mum_id)
+		mum_dp = self.get_depth(mum_id)
+		dad_gq = self.get_genotype_quality(dad_id)
+		dad_dp = self.get_depth(dad_id)
+
+		# dad must be homozygous and mum must be homozygous for other allele and child homozygouse for same allele as dad
 
 
+		if (self.is_hom_ref(dad_id) and
+			self.is_hom_alt(mum_id) and 
+			self.is_hom_ref(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+			return True
+
+		if (self.is_hom_alt(dad_id) and
+			self.is_hom_ref(mum_id) and 
+			self.is_hom_alt(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+			return True 
+
+		return False
 
 
+	def matches_maternal_uniparental_ambiguous(self,  min_parental_gq=30, min_parental_depth=10):
+		"""
+		A type of mendelian error symptomatic of a UPD event.
+
+		Where the dad has allele AA and mum BB and child has AA
+
+		This could happen from either a heterodisomic or isodisomic event
+
+		"""
+
+		proband = self.family.get_proband()
+		
+		mum = proband.get_mum()
+		dad = proband.get_dad()
+
+		# Must have both parents to calculate
+		if mum == None or dad == None:
+				
+			return False
+
+		mum_id = mum.get_id()
+		dad_id = dad.get_id()
+		proband_id = proband.get_id()
+
+		mum_gq = self.get_genotype_quality(mum_id)
+		mum_dp = self.get_depth(mum_id)
+		dad_gq = self.get_genotype_quality(dad_id)
+		dad_dp = self.get_depth(dad_id)
+
+		# dad must be homozygous and mum must be homozygous for other allele and child homozygouse for same allele as dad
+
+
+		if (self.is_hom_ref(mum_id) and
+			self.is_hom_alt(dad_id) and 
+			self.is_hom_ref(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+			return True
+
+		if (self.is_hom_alt(mum_id) and
+			self.is_hom_ref(dad_id) and 
+			self.is_hom_alt(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+			return True 
+
+		return False
+
+	def matches_paternal_uniparental_isodisomy(self,  min_parental_gq=30, min_parental_depth=10):
+
+		proband = self.family.get_proband()
+		
+		mum = proband.get_mum()
+		dad = proband.get_dad()
+
+		# Must have both parents to calculate
+		if mum == None or dad == None:
+				
+			return False
+
+		mum_id = mum.get_id()
+		dad_id = dad.get_id()
+		proband_id = proband.get_id()
+
+		mum_gq = self.get_genotype_quality(mum_id)
+		mum_dp = self.get_depth(mum_id)
+		dad_gq = self.get_genotype_quality(dad_id)
+		dad_dp = self.get_depth(dad_id)
+
+		# mum homozygous ref dad het and kid homozygous for alt
+		if (self.is_hom_ref(mum_id) and 
+			self.is_het(dad_id) and 
+			self.is_hom_alt(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+
+			return True
+
+		# mum homozygous alt dad het and kid homozygous for ref
+		if (self.is_hom_alt(mum_id) and 
+			self.is_het(dad_id) and 
+			self.is_hom_ref(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+
+			return True
+
+		return False
+
+
+	def matches_maternal_uniparental_isodisomy(self,  min_parental_gq=30, min_parental_depth=10):
+
+		proband = self.family.get_proband()
+		
+		mum = proband.get_mum()
+		dad = proband.get_dad()
+
+		# Must have both parents to calculate
+		if mum == None or dad == None:
+				
+			return False
+
+		mum_id = mum.get_id()
+		dad_id = dad.get_id()
+		proband_id = proband.get_id()
+
+		mum_gq = self.get_genotype_quality(mum_id)
+		mum_dp = self.get_depth(mum_id)
+		dad_gq = self.get_genotype_quality(dad_id)
+		dad_dp = self.get_depth(dad_id)
+
+		# mum homozygous ref dad het and kid homozygous for alt
+		if (self.is_hom_ref(dad_id) and 
+			self.is_het(mum_id) and 
+			self.is_hom_alt(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+
+			return True
+
+		# mum homozygous alt dad het and kid homozygous for ref
+		if (self.is_hom_alt(dad_id) and 
+			self.is_het(mum_id) and 
+			self.is_hom_ref(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+
+			return True
+
+		return False
+
+
+	def alleles_identical_to_dad(self, min_parental_gq=30, min_parental_depth=10):
+		"""
+		Does the proband have identical alleles to dad?
+
+		"""
+
+		proband = self.family.get_proband()
+		
+		mum = proband.get_mum()
+		dad = proband.get_dad()
+
+		# Must have both parents to calculate
+		if mum == None or dad == None:
+				
+			return False
+
+		mum_id = mum.get_id()
+		dad_id = dad.get_id()
+		proband_id = proband.get_id()
+
+		if self.is_missing(proband_id) or self.is_missing(dad_id):
+
+			return False
+
+		dad_gq = self.get_genotype_quality(dad_id)
+		dad_dp = self.get_depth(dad_id)
+
+		gt_proband = self.genotypes[proband_id]['genotype']
+		gt_dad = self.genotypes[dad_id]['genotype']
+
+		if (set(gt_proband) == set(gt_dad) and 
+			dad_gq >= min_parental_gq and
+			dad_dp >= min_parental_depth):
+
+			return True
+
+		return False
+
+	def alleles_identical_to_mum(self, min_parental_gq=30, min_parental_depth=10):
+		"""
+		Does the proband have identical alleles to mum?
+
+		"""
+
+		proband = self.family.get_proband()
+		
+		mum = proband.get_mum()
+		dad = proband.get_dad()
+
+		# Must have both parents to calculate
+		if mum == None or dad == None:
+				
+			return False
+
+		mum_id = mum.get_id()
+		dad_id = dad.get_id()
+		proband_id = proband.get_id()
+
+		if self.is_missing(proband_id) or self.is_missing(mum_id):
+
+			return False
+
+		mum_gq = self.get_genotype_quality(mum_id)
+		mum_dp = self.get_depth(mum_id)
+
+		gt_proband = self.genotypes[proband_id]['genotype']
+		gt_mum = self.genotypes[mum_id]['genotype']
+
+		if (set(gt_proband) == set(gt_mum) and 
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth):
+
+			return True
+
+		return False
+
+	def is_snp(self):
+		"""
+		Is the variant a simple snp with a ref and alt length of 1?
+		"""
+
+		if len(self.ref) == 1 and len(self.alt) == 1:
+
+			return True
+
+		return False
+
+
+	def all_samples_pass_genotype_quality(self , min_dp=10, min_gq=20):
+		"""
+		Check all sample genotypes are not missing and have depths and gqs above the minimum.
+		"""
+
+		for sample_id in self.family.get_all_family_member_ids():
+
+			gq = self.get_genotype_quality(sample_id)
+			dp = self.get_depth(sample_id)
+
+			if dp < min_dp:
+
+				return False
+
+			if gq < min_gq:
+
+				return False
+
+			if self.is_missing(sample_id) == True:
+
+				return False
+
+		return True
+
+	def get_quality(self):
+		"""	
+		Return the quality
+		"""
+
+		return self.quality
+
+
+	def is_biparental_inheritance(self, min_parental_gq=30, min_parental_depth=10):
+		"""
+		Is the site one in which the proband inherits a different allele from each parent?
+
+		Or at least a site where this is provable who transmits what!
+
+		Can be used to rule out UPD across a region
+
+		"""
+
+		proband = self.family.get_proband()
+		
+		mum = proband.get_mum()
+		dad = proband.get_dad()
+
+		# Must have both parents to calculate
+		if mum == None or dad == None:
+				
+			return False
+
+		mum_id = mum.get_id()
+		dad_id = dad.get_id()
+		proband_id = proband.get_id()
+
+		mum_gq = self.get_genotype_quality(mum_id)
+		mum_dp = self.get_depth(mum_id)
+
+		dad_gq = self.get_genotype_quality(dad_id)
+		dad_dp = self.get_depth(dad_id)
+
+		if self.is_missing(proband_id) or self.is_missing(mum_id):
+
+			return False
+
+		# dad is hom for alt mum is hom for ref and kid is het
+
+		if (self.is_hom_alt(dad_id) and 
+			self.is_hom_ref(mum_id) and 
+			self.is_het(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth):
+
+			return True
+
+		# dad is hom for ref mum is hom for alt and kid is het
+		if (self.is_hom_ref(dad_id) and 
+			self.is_hom_alt(mum_id) and 
+			self.is_het(proband_id) and
+			mum_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth and
+			dad_gq >= min_parental_gq and
+			mum_dp >= min_parental_depth):
+
+			return True	
+
+		return False
