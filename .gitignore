@@ -17,3 +17,4 @@ build/
 dist/
 temp/
 test_data/123000015.ped
+analysis/

@@ -71,6 +71,13 @@ class VariantSet:
 
 		"""
 
+		valid_chroms = {'1': None, '2': None, '3': None, '4': None,
+		 '5': None, '6': None, '7': None, '8': None, '9': None,
+		 '10': None, '11': None, '12': None, '13': None,
+		 '14': None, '15': None, '16': None, '17': None,
+		 '18': None, '19': None, '20': None, '21': None,
+		 '22': None, 'X': None, 'Y': None, 'MT': None, 'M': None}
+
 		assert self.family != None
 
 		family_member_ids = self.family.get_all_family_member_ids()
@@ -100,6 +107,17 @@ class VariantSet:
 			filter_status = rec.filter.keys()
 			info = rec.info
 			quality = rec.qual
+
+			if 'chr' in chrom:
+
+				chrom = chrom.strip('chr')
+
+			# Chromosome is correct
+			if chrom not in valid_chroms:
+
+				print (f'{chrom} is not a valid chromosome. Not entered into variant set.')
+
+				continue
 
 			info_dict = get_info_field_dict(info, vep_csq_key)
 
@@ -163,8 +181,15 @@ class VariantSet:
 						else:
 						
 							ads.append(ad)
+				try:
 
-				gq = sample_genotype_data['GQ']
+					gq = sample_genotype_data['GQ']
+
+				except:
+
+					print (f'Warning No GQ for variant {new_variant.variant_id}. This could cause filtering errors.')
+					# set to high so we don't accidently filter out
+					gq = 100
 
 				if gq == None:
 
@@ -213,6 +238,12 @@ class VariantSet:
 			None - loads variants into self.variant_dict
 
 		"""
+		valid_chroms = {'1': None, '2': None, '3': None, '4': None,
+		 '5': None, '6': None, '7': None, '8': None, '9': None,
+		 '10': None, '11': None, '12': None, '13': None,
+		 '14': None, '15': None, '16': None, '17': None,
+		 '18': None, '19': None, '20': None, '21': None,
+		 '22': None, 'X': None, 'Y': None, 'MT': None, 'M': None}
 
 		assert self.family != None
 
@@ -234,11 +265,7 @@ class VariantSet:
 
 			csq_fields = csq_fields[index:len(csq_fields)-2].split('|')
 
-		count = 0
-
 		for rec in bcf_in.fetch():
-
-			count = count+1
 			
 			chrom = rec.chrom
 			pos = rec.pos
@@ -250,6 +277,16 @@ class VariantSet:
 
 			info_dict = get_info_field_dict(info, vep_csq_key)
 
+			if 'chr' in chrom:
+
+				chrom = chrom.strip('chr')
+
+			# Chromosome is correct
+			if chrom not in valid_chroms:
+
+				print (f'{chrom} is not a valid chromosome. Not entered into variant set.')
+
+				continue
 			
 			assert len(alt) == 1
 

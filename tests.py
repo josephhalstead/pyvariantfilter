@@ -3009,6 +3009,412 @@ class TestPedReader(unittest.TestCase):
 		my_family.read_from_ped_file('test_data/FAM001.ped', 'FAM001', 'proband')
 
 
+class TestPaternalUPDAmbiguous(unittest.TestCase):
+
+	def test_trio_hom_ref_autosome(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['G', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_paternal_uniparental_ambiguous(), True)
+
+
+	def test_trio_hom_alt_autosome(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_paternal_uniparental_ambiguous(), True)
+
+
+	def test_trio_not_correct(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_paternal_uniparental_ambiguous(), False)
+
+	def test_trio_not_correct2(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', '.'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_paternal_uniparental_ambiguous(), False)
+
+	def test_trio_not_correct3(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_paternal_uniparental_ambiguous(), False)
+
+
+class TestMaternalUPDAmbiguous(unittest.TestCase):
+
+	def test_trio_hom_alt_autosome(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['G', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_maternal_uniparental_ambiguous(), True)
+
+
+	def test_trio_hom_ref_autosome(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_maternal_uniparental_ambiguous(), True)
+
+
+	def test_trio_not_correct(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_maternal_uniparental_ambiguous(), False)
+
+	def test_trio_not_correct2(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', '.'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_maternal_uniparental_ambiguous(), False)
+
+	def test_trio_not_correct3(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_maternal_uniparental_ambiguous(), False)
+
+
+class TestPaternalUPDIsodisomy(unittest.TestCase):
+
+
+	def test_trio_paternal_inheritance_ref(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_paternal_uniparental_isodisomy(), True)
+
+
+	def test_trio_paternal_inheritance_alt(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_paternal_uniparental_isodisomy(), True)
+
+class TestMaternalUPDIsodisomy(unittest.TestCase):
+
+
+	def test_trio_paternal_inheritance_ref(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_maternal_uniparental_isodisomy(), True)
+
+
+	def test_trio_paternal_inheritance_alt(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['G', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.matches_maternal_uniparental_isodisomy(), True)
+
+
+class TestAllelesIdenticalToDad(unittest.TestCase):
+
+	def test_is_identical_to_dad(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['G', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.alleles_identical_to_dad(), True)
+
+	def test_is_identical_to_dad2(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.alleles_identical_to_dad(), True)
+
+
+class TestBiparentalInheritance(unittest.TestCase):
+
+
+	def test_biparental_true_ref(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['G', 'G'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.is_biparental_inheritance(), True)
+
+	def test_biparental_true_ref(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.is_biparental_inheritance(), True)
+
+	def test_biparental_false_ref(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['G', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['A', 'A'], [12, 0], 99, 20 )
+
+		self.assertEqual(variant.is_biparental_inheritance(), False)
+
+
 if __name__ == '__main__':
 	unittest.main()
 
