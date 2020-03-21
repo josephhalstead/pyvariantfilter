@@ -5,7 +5,7 @@ with open('readme.md', 'r') as fh:
 
 setuptools.setup(
     name='pyvariantfilter',
-    version='0.0.1',
+    version='1.0.0',
     author='Joseph Halstead',
     author_email='josephhalstead89@gmail.com',
     description='Python package for filtering variants.',
