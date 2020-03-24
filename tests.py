@@ -599,6 +599,43 @@ class TestDominantTrioUnaffectedParents(unittest.TestCase):
 
 		self.assertEqual(variant.matches_autosomal_dominant(), True)
 
+	
+	def test_dominant(self):
+
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, mum=mum, dad=dad)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['G', 'A'], [10, 2], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [10, 2], 99, 20 )
+		variant.add_genotype('dad', ['G', 'G'], [10, 2], 99, 20 )
+
+		self.assertEqual(variant.matches_autosomal_dominant(), True)
+
+
+		variant.add_genotype('proband', ['G', 'A'], [10, 2], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [10, 2], 99, 20 )
+		variant.add_genotype('dad', ['.', '.'], [10, 2], 99, 20 )
+
+		self.assertEqual(variant.matches_autosomal_dominant(), True)
+
+		
+		variant.add_genotype('proband', ['G', 'A'], [10, 2], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [10, 2], 99, 20 )
+		variant.add_genotype('dad', ['G', '.'], [10, 2], 99, 20 )
+
+		self.assertEqual(variant.matches_autosomal_dominant(), True)
+
+
+
 
 class TestDominantTrioUnaffectedParentsLowPenetrance(unittest.TestCase):
 	"""

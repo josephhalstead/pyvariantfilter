@@ -578,7 +578,7 @@ class Variant:
 				
 			for family_member_id in unaffected:
 					
-				if self.is_hom_ref(family_member_id) == False and self.is_missing(family_member_id) == False:
+				if self.is_hom_ref(family_member_id) == False and self.is_missing(family_member_id) == False and self.is_mixed(family_member_id) == False:
 						
 					return False
 				
@@ -976,7 +976,7 @@ class Variant:
 								 low_penetrance_genes={},
 								 min_parental_gq_dn=30,
 								 min_parental_depth_dn=10,
-								 max_parental_alt_ref_ratio_dn=0.04,
+								 max_parental_alt_ref_ratio_dn=0.03,
 								 min_parental_gq_upi=30,
 								 min_parental_depth_upi=10):
 		"""
