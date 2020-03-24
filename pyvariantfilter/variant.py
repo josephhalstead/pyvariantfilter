@@ -578,7 +578,7 @@ class Variant:
 				
 			for family_member_id in unaffected:
 					
-				if self.is_hom_ref(family_member_id) == False and self.is_missing(family_member_id) == False and self.is_mixed(family_member_id) == False:
+				if self.has_alt(family_member_id) == True:
 						
 					return False
 				
