@@ -634,7 +634,11 @@ class TestDominantTrioUnaffectedParents(unittest.TestCase):
 
 		self.assertEqual(variant.matches_autosomal_dominant(), True)
 
+		variant.add_genotype('proband', ['G', 'A'], [10, 2], 99, 20 )
+		variant.add_genotype('mum', ['G', 'G'], [10, 2], 99, 20 )
+		variant.add_genotype('dad', ['A', '.'], [10, 2], 99, 20 )
 
+		self.assertEqual(variant.matches_autosomal_dominant(), False)
 
 
 class TestDominantTrioUnaffectedParentsLowPenetrance(unittest.TestCase):
