@@ -594,7 +594,14 @@ class VariantSet:
 		self.variant_dict = {k : v for k,v in filter(lambda x: function(x[1], *args), self.variant_dict.items())}
 
 
-	def to_df(self, add_inheritance=True):
+	def to_df(self, add_inheritance=True,
+				 lenient=False,
+				 low_penetrance_genes={},
+				 min_parental_gq_dn=30,
+				 min_parental_depth_dn=10,
+				 max_parental_alt_ref_ratio_dn=0.04,
+				 min_parental_gq_upi=30,
+				 min_parental_depth_upi=10):
 		"""
 		Convert variant_dict to Pandas DataFrame.
 
@@ -624,7 +631,14 @@ class VariantSet:
 
 		        if add_inheritance == True:
 
-		        	row['inheritance_models'] = '|'.join(var.get_matching_inheritance_models(self.final_compound_hets))
+		        	row['inheritance_models'] = '|'.join(var.get_matching_inheritance_models(compound_het_dict= self.final_compound_hets,
+		        																			lenient=lenient,
+		        																			min_parental_gq_dn=min_parental_gq_dn,
+		        																			min_parental_depth_dn =min_parental_depth_dn,
+		        																			max_parental_alt_ref_ratio_dn= max_parental_alt_ref_ratio_dn,
+		        																			min_parental_gq_upi = min_parental_gq_upi,
+		        																			min_parental_depth_upi = min_parental_depth_upi
+		        																			))
 
 		        row['worst_consequence'] = var.get_worst_consequence()
 		        

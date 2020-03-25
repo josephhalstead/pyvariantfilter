@@ -678,7 +678,7 @@ class Variant:
 				# no div by 0 - what if ads are 0,0
 				if mum_ref == 0:
 
-					mum_ad_ratio = 1
+					mum_ad_ratio = 0
 
 				else:
 
@@ -692,7 +692,7 @@ class Variant:
 				# no div by 0
 				if dad_ref == 0:
 
-					dad_ad_ratio = 1
+					dad_ad_ratio = 0
 
 				else:
 
