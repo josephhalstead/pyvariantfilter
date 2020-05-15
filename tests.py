@@ -3456,6 +3456,66 @@ class TestBiparentalInheritance(unittest.TestCase):
 		self.assertEqual(variant.is_biparental_inheritance(), False)
 
 
+
+class TestFilterInfoAnnotation(unittest.TestCase):
+
+
+	def test_filter_on_numerical_info_annotation_lte(self):
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+		variant = Variant(chrom='2', pos=10, ref='G', alt='A')
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['A', 'G'], [12, 0], 99, 20 )
+		variant.add_genotype('mum', ['A', 'A'], [12, 0], 99, 20 )
+		variant.add_genotype('dad', ['G', 'G'], [12, 0], 99, 20 )
+
+		variant.add_info_annotations({'gnomad': 0.01, 'gnomadstr': '0.01', 'gnomadmissing': '.', 'gnomadmissing2': None})
+
+		gnomad = variant.get_numerical_info_annotation('gnomad')
+		gnomadstr = variant.get_numerical_info_annotation('gnomadstr')
+		gnomadmissing = variant.get_numerical_info_annotation('gnomadmissing')
+		gnomadmissing2 = variant.get_numerical_info_annotation('gnomadmissing2')
+
+		self.assertEqual(gnomad, 0.01)
+		self.assertEqual(gnomadstr, 0.01)
+		self.assertEqual(gnomadmissing, 0)
+		self.assertEqual(gnomadmissing2, 0)
+
+
+		gnomad_filt = variant.filter_on_numerical_info_annotation_lte(annotation_key='gnomad',
+													  ad_het=0.5,
+													  ad_hom_alt=0.5,
+													  x_male =0.5,
+													  x_female_het=0.5,
+													  x_female_hom=0.5,
+													  compound_het=0.5,
+													  y=0.5,
+													  mt=0.5,
+													  compound_het_dict={})
+
+		gnomad_filt2 = variant.filter_on_numerical_info_annotation_lte(annotation_key='gnomad',
+													  ad_het=0.0001,
+													  ad_hom_alt=0.0001,
+													  x_male =0.0001,
+													  x_female_het=0.0001,
+													  x_female_hom=0.0001,
+													  compound_het=0.0001,
+													  y=0.0001,
+													  mt=0.0001,
+													  compound_het_dict={})
+
+
+		self.assertEqual(gnomad_filt, True)
+		self.assertEqual(gnomad_filt2, False)
+
+
 if __name__ == '__main__':
 	unittest.main()
 

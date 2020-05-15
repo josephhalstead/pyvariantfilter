@@ -1361,6 +1361,74 @@ class Variant:
 			raise ValueError('Invalid aggregation function supplied')
 
 
+	def get_numerical_info_annotation(self, annotation_key, zero_values=['.', '', None], agg_func='min'):
+		"""
+		Returns a numerical info annotation. If there are multiple values these can be aggregated using
+		the add_func option.
+
+		Input:
+		
+		annotation_key - A key to the numerical value in the self.transcript_annotations list of dicts
+		zero_values - Values which should be changed to zero e.g. '.'
+		agg_func - How to aggregate multiple values - possibilities = min, max, mean
+
+
+		Returns:
+
+		The numerical value as a float.
+		"""
+
+		annotations = []
+
+		annotation = self.info_annotations[annotation_key]
+
+		if annotation in zero_values:
+
+			annotations.append(0.0)
+
+		elif isinstance(annotation, str):
+
+			if '&' in annotation:
+
+				annotation = annotation.split('&')
+
+				for sub_annotation in annotation:
+
+					if sub_annotation in zero_values:
+
+						annotations.append(0.0)
+
+					else:
+
+						annotations.append(sub_annotation)
+
+			else:
+
+				annotations.append(annotation)
+
+		else:
+
+			annotations.append(annotation)
+
+		annotations = [float(annotation) for annotation in annotations]
+
+		if agg_func  == 'min':
+
+			return min(annotations)
+
+		elif agg_func == 'max':
+
+			return max(annotations)
+
+		elif agg_func == 'mean':
+
+			return statistics.mean(annotations)
+
+		else:
+
+			raise ValueError('Invalid aggregation function supplied')
+
+
 	def filter_on_numerical_transcript_annotation_gte(self,
 												 annotation_key,
 												 ad_het,
@@ -1496,7 +1564,140 @@ class Variant:
 
 			raise ValueError('Variant does not have a a recognised workflow - is the proband homozygous reference?')
 
+	def filter_on_numerical_info_annotation_gte(self,
+													 annotation_key,
+													 ad_het,
+													 ad_hom_alt,
+													 x_male,
+													 x_female_het,
+													 x_female_hom,
+													 compound_het,
+													 y,
+													 mt,
+													 zero_values=['.', '', None],
+													 agg_func='min',
+													 compound_het_dict = {}):
 
+			"""
+			Filter on a numerical value. Is the value is larger or equal to the provided value?
+
+			Different values can be provided for different variant types. For example we can provide different 
+			values for ad_het (autosomal heterozygous) and x_male (variants on x chromsome in men).
+
+			Uses the genotype of whichever sample is set as the proband.
+
+			Input:
+
+				annotation_key - which annotation in the self.info list of dictionaries to get
+				ad_het - the value to filter on for variants in which the proband is heterozygouse on an autosome.
+				ad_hom_alt - the value to filter on for variants in which the proband is homozygous alt on an autosome.
+				x_male - the value to filter on for variants on the X chromsome in which the proband is male.  
+				x_female_het - the value to filter on for heterozygous variants on the X chromsome in which the proband is female. 
+				x_female_hom - the value to filter on for homozygous variants on the X chromsome in which the proband is female.
+				compound_het - the value to filter on if the variant is a compound het.
+				y - the value to filter on if the variant is on the Y chromosome.
+				mt - teh value to filter on if the variant is on the Mitochondrial chromosome.
+				zero_values - list of values which should be considered as 0 in the annotation.
+				agg_func - how to aggregate multiple values - min, max, mean
+				compound_het_dict - A dictionary of variants which are compound hets.
+
+			Returns:
+
+				True - if the variant has a value above the supplied value
+				False - otherwise.
+
+			"""
+
+
+			annotation = self.get_numerical_info_annotation(annotation_key, zero_values, agg_func)
+			proband = self.family.get_proband()
+			proband_id = proband.get_id()
+
+
+			if self.variant_id in compound_het_dict:
+
+				if annotation >= compound_het:
+
+						return True
+
+				else:
+
+					return False
+
+
+			if self.chrom not in ['X', 'Y', 'MT', 'M'] and self.is_het(proband_id):
+
+				if annotation >= ad_het:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom not in ['X', 'Y', 'MT', 'M'] and self.is_hom_alt(proband_id):
+
+				if annotation >= ad_hom_alt:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom == 'X' and proband.sex == 1 and self.has_alt(proband_id):
+
+				if annotation >= x_male:
+
+					return True
+
+				else:
+
+					return False	
+
+			elif self.chrom == 'X' and proband.sex == 2 and self.is_het(proband_id):
+
+				if annotation >= x_female_het:
+
+					return True
+
+				else:
+
+					return False	
+
+			elif self.chrom == 'X' and proband.sex == 2 and self.is_hom_alt(proband_id):
+
+				if annotation >= x_female_hom:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom =='Y':
+
+				if annotation >= y:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom =='MT' or self.chrom =='M':
+
+				if annotation >= mt:
+
+					return True
+
+				else:
+
+					return False
+
+			else:
+
+				raise ValueError('Variant does not have a a recognised workflow - is the proband homozygous reference?')
 
 	def filter_on_numerical_transcript_annotation_lte(self,
 												 annotation_key,
@@ -1629,6 +1830,139 @@ class Variant:
 		else:
 
 			raise ValueError('Variant does not have a a recognised workflow - is the proband homozygous reference?')
+
+
+	def filter_on_numerical_info_annotation_lte(self,
+													 annotation_key,
+													 ad_het,
+													 ad_hom_alt,
+													 x_male,
+													 x_female_het,
+													 x_female_hom,
+													 compound_het,
+													 y,
+													 mt,
+													 zero_values=['.', '', None],
+													 agg_func='min',
+													 compound_het_dict = {}):
+			"""
+			Filter on a numerical value. Is the value is less than or equal to the provided value?
+
+			Different values can be provided for different variant types. For example we can provide different 
+			values for ad_het (autosomal heterozygous) and x_male (variants on x chromsome in men).
+
+			Uses the genotype of whichever sample is set as the proband.
+
+			Input:
+
+				annotation_key - which annotation in the self.info dictionary to get
+				ad_het - the value to filter on for variants in which the proband is heterozygouse on an autosome.
+				ad_hom_alt - the value to filter on for variants in which the proband is homozygous alt on an autosome.
+				x_male - the value to filter on for variants on the X chromsome in which the proband is male.  
+				x_female_het - the value to filter on for heterozygous variants on the X chromsome in which the proband is female. 
+				x_female_hom - the value to filter on for homozygous variants on the X chromsome in which the proband is female.
+				compound_het - the value to filter on if the variant is a compound het.
+				y - the value to filter on if the variant is on the Y chromosome.
+				mt - teh value to filter on if the variant is on the Mitochondrial chromosome.
+				zero_values - list of values which should be considered as 0 in the annotation.
+				agg_func - how to aggregate multiple values - min, max, mean
+				compound_het_dict - A dictionary of variants which are compound hets.
+
+			Returns:
+
+				True - if the variant has a value below the supplied value
+				False - otherwise.
+
+			"""
+
+
+			annotation = self.get_numerical_info_annotation(annotation_key, zero_values, agg_func)
+			proband = self.family.get_proband()
+			proband_id = proband.get_id()
+
+			if self.variant_id in compound_het_dict:
+
+				if annotation <= compound_het:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom not in ['X', 'Y', 'MT', 'M'] and self.is_het(proband_id):
+
+				if annotation <= ad_het:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom not in ['X', 'Y', 'MT', 'M'] and self.is_hom_alt(proband_id):
+
+				if annotation <= ad_hom_alt:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom == 'X' and proband.sex == 1 and self.has_alt(proband_id):
+
+				if annotation <= x_male:
+
+					return True
+
+				else:
+
+					return False	
+
+			elif self.chrom == 'X' and proband.sex == 2 and self.is_het(proband_id):
+
+				if annotation <= x_female_het:
+
+					return True
+
+				else:
+
+					return False	
+
+			elif self.chrom == 'X' and proband.sex == 2 and self.is_hom_alt(proband_id):
+
+				if annotation <= x_female_hom:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom =='Y':
+
+				if annotation <= y:
+
+					return True
+
+				else:
+
+					return False
+
+			elif self.chrom =='MT' or self.chrom == 'M':
+
+				if annotation <= mt:
+
+					return True
+
+				else:
+
+					return False
+
+			else:
+
+				raise ValueError('Variant does not have a a recognised workflow - is the proband homozygous reference?')
 
 
 	def matches_paternal_uniparental_ambiguous(self,  min_parental_gq=30, min_parental_depth=10):
