@@ -4,6 +4,7 @@ from pyvariantfilter.utils import parse_csq_field, get_info_field_dict, compound
 from pysam import VariantFile
 import itertools
 import pandas as pd
+from copy import deepcopy
 
 class VariantSet:
 	"""
@@ -597,10 +598,10 @@ class VariantSet:
 	def to_df(self, add_inheritance=True,
 				 lenient=False,
 				 low_penetrance_genes={},
-				 min_parental_gq_dn=30,
+				 min_parental_gq_dn=10,
 				 min_parental_depth_dn=10,
 				 max_parental_alt_ref_ratio_dn=0.04,
-				 min_parental_gq_upi=30,
+				 min_parental_gq_upi=10,
 				 min_parental_depth_upi=10):
 		"""
 		Convert variant_dict to Pandas DataFrame.
@@ -614,51 +615,51 @@ class VariantSet:
 		df_list = []
 
 		for variant in self.variant_dict :
-    
-		    var = self.variant_dict [variant]
-		    
-		    for transcript in var.transcript_annotations:
-		        
-		        row = {}
-		        
-		        row['chromosome'] = var.chrom
-		        row['position'] = var.pos
-		        row['ref'] = var.ref
-		        row['alt'] = var.alt
-		        row['filter_status'] = '|'.join(var.filter_status)
-		        row['family_id'] = var.family.family_id
-		        row['variant_id'] = var.variant_id
+	
+			var = self.variant_dict [variant]
+			
+			for transcript in var.transcript_annotations:
+				
+				row = {}
+				
+				row['chromosome'] = var.chrom
+				row['position'] = var.pos
+				row['ref'] = var.ref
+				row['alt'] = var.alt
+				row['filter_status'] = '|'.join(var.filter_status)
+				row['family_id'] = var.family.family_id
+				row['variant_id'] = var.variant_id
 
-		        if add_inheritance == True:
+				if add_inheritance == True:
 
-		        	row['inheritance_models'] = '|'.join(var.get_matching_inheritance_models(compound_het_dict= self.final_compound_hets,
-		        																			lenient=lenient,
-		        																			min_parental_gq_dn=min_parental_gq_dn,
-		        																			min_parental_depth_dn =min_parental_depth_dn,
-		        																			max_parental_alt_ref_ratio_dn= max_parental_alt_ref_ratio_dn,
-		        																			min_parental_gq_upi = min_parental_gq_upi,
-		        																			min_parental_depth_upi = min_parental_depth_upi
-		        																			))
+					row['inheritance_models'] = '|'.join(var.get_matching_inheritance_models(compound_het_dict= self.final_compound_hets,
+																							lenient=lenient,
+																							min_parental_gq_dn=min_parental_gq_dn,
+																							min_parental_depth_dn =min_parental_depth_dn,
+																							max_parental_alt_ref_ratio_dn= max_parental_alt_ref_ratio_dn,
+																							min_parental_gq_upi = min_parental_gq_upi,
+																							min_parental_depth_upi = min_parental_depth_upi
+																							))
 
-		        row['worst_consequence'] = var.get_worst_consequence()
-		        
-		        for sample in var.genotypes:
-		                   
-		            row[f'{sample}_GT'] = '/'.join(var.genotypes[sample]['genotype'])
-		            row[f'{sample}_AD'] =  ','.join(str(x) for x in var.genotypes[sample]['allele_depths'])
-		            row[f'{sample}_DP'] = var.genotypes[sample]['depth']
-		            row[f'{sample}_GQ'] = var.genotypes[sample]['genotype_quality']
-		            
-		        for info_annotation in var.info_annotations:
-		            
-		            row[f'info_{info_annotation}'] = var.info_annotations[info_annotation]
-		            
-		        for transcript_annotation in transcript:
-		            
-		            row[f'csq_{transcript_annotation}'] = transcript[transcript_annotation]
-		        
-		        
-		        df_list.append(row)
+				row['worst_consequence'] = var.get_worst_consequence()
+				
+				for sample in var.genotypes:
+						   
+					row[f'{sample}_GT'] = '/'.join(var.genotypes[sample]['genotype'])
+					row[f'{sample}_AD'] =  ','.join(str(x) for x in var.genotypes[sample]['allele_depths'])
+					row[f'{sample}_DP'] = var.genotypes[sample]['depth']
+					row[f'{sample}_GQ'] = var.genotypes[sample]['genotype_quality']
+					
+				for info_annotation in var.info_annotations:
+					
+					row[f'info_{info_annotation}'] = var.info_annotations[info_annotation]
+					
+				for transcript_annotation in transcript:
+					
+					row[f'csq_{transcript_annotation}'] = transcript[transcript_annotation]
+				
+				
+				df_list.append(row)
 
 		df = pd.DataFrame(df_list)
 
@@ -666,12 +667,98 @@ class VariantSet:
 
 
 
+	def to_dict(self, add_inheritance=True,
+				 lenient=False,
+				 low_penetrance_genes={},
+				 min_parental_gq_dn=10,
+				 min_parental_depth_dn=10,
+				 max_parental_alt_ref_ratio_dn=0.04,
+				 min_parental_gq_upi=10,
+				 min_parental_depth_upi=10,
+				 get_picked=True):
+		"""
+		Convert variant_dict to a dict fro json processing
+
+		Input: None
+
+		Returns: Python Dict object.
+
+		"""
+		variant_set_dict = {}
+
+		variant_set_dict['family'] = deepcopy(self.family.__dict__)
+
+		member_list = []
+
+		for member in variant_set_dict['family']['family_members']:
+			member_list.append(deepcopy(member.__dict__))
+
+		variant_set_dict['family']['family_members'] = deepcopy(member_list)
+
+		variant_set_dict['variants'] = []
+
+		for variant in self.variant_dict:
+
+			var = self.variant_dict[variant]
+
+			individual_variant_dict = {}
+
+			individual_variant_dict['chromosome'] = var.chrom
+			individual_variant_dict['position'] = var.pos
+			individual_variant_dict['ref'] = var.ref
+			individual_variant_dict['alt'] = var.alt
+			individual_variant_dict['filter_status'] = '|'.join(var.filter_status)
+
+			individual_variant_dict['worst_consequence'] = var.get_worst_consequence()
+
+			individual_variant_dict['all_genes'] = '|'.join(list(set(var.get_genes(feature_key='SYMBOL'))))
+
+			if add_inheritance == True:
+
+				individual_variant_dict['inheritance_models'] = '|'.join(var.get_matching_inheritance_models(compound_het_dict= self.final_compound_hets,
+																							lenient=lenient,
+																							min_parental_gq_dn=min_parental_gq_dn,
+																							min_parental_depth_dn =min_parental_depth_dn,
+																							max_parental_alt_ref_ratio_dn= max_parental_alt_ref_ratio_dn,
+																							min_parental_gq_upi = min_parental_gq_upi,
+																							min_parental_depth_upi = min_parental_depth_upi
+																							))
+
+			individual_variant_dict['info_annotations'] = deepcopy(var.info_annotations)
+
+			individual_variant_dict['transcript_annotations'] = deepcopy(var.transcript_annotations)
+
+			if get_picked == True:
+
+				individual_variant_dict['picked_transcript_annotations'] = []
+				individual_variant_dict['extra_transcript_annotations'] = []
+
+				for transcript in individual_variant_dict['transcript_annotations']:
+
+					if transcript['PICK'] == '1':
+
+						individual_variant_dict['picked_transcript_annotations'].append(transcript)
+
+					else:
+
+						individual_variant_dict['extra_transcript_annotations'].append(transcript)
 
 
+			del individual_variant_dict['transcript_annotations']
 
+			individual_variant_dict['genotypes'] = {}
+		
+			for sample in var.genotypes:
 
+					individual_variant_dict['genotypes'][sample] ={}
+					individual_variant_dict['genotypes'][sample]['genotype'] = '/'.join(var.genotypes[sample]['genotype'])
+					individual_variant_dict['genotypes'][sample]['allele_depths'] = ','.join(str(x) for x in var.genotypes[sample]['allele_depths'])
+					individual_variant_dict['genotypes'][sample]['depth'] = var.genotypes[sample]['depth']
+					individual_variant_dict['genotypes'][sample]['genotype_quality'] = var.genotypes[sample]['genotype_quality']
 
+			variant_set_dict['variants'].append(individual_variant_dict)
 
+		return variant_set_dict
 
 
 
