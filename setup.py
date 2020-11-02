@@ -1,15 +1,13 @@
 import setuptools
 
-with open('readme.md', 'r') as fh:
-    long_description = fh.read()
 
 setuptools.setup(
     name='pyvariantfilter',
-    version='1.0.6',
+    version='1.0.8',
     author='Joseph Halstead',
     author_email='josephhalstead89@gmail.com',
     description='Python package for filtering variants.',
-    long_description=long_description,
+    long_description='pyvariantfilter',
     long_description_content_type='text/markdown',
     url='https://github.com/josephhalstead/pyvariantfilter',
     packages=setuptools.find_packages(),

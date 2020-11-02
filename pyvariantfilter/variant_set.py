@@ -93,7 +93,7 @@ class VariantSet:
 
 			csq_fields = str(bcf_in.header.info[vep_csq_key].record)
 
-			csq_fields = csq_fields = csq_fields.strip()
+			csq_fields = csq_fields.strip()
 
 			index = csq_fields.index('Format:') + 8
 
@@ -158,6 +158,15 @@ class VariantSet:
 					else:
 						
 						gts.append(ref_and_alt[allele])
+
+
+				if len(gts) == 1 and (chrom == 'X' or chrom == 'Y'):
+
+					if family_member_id in self.family.get_male_family_members():
+						gts.append(gts[0])
+					else:
+						gts.append(gts[0])
+						print (f'Warning: A haploid genotype at position {pos} but this sample is female.')
 
 				if gts[0] == '.' and gts[1] == '.':
 
@@ -260,7 +269,7 @@ class VariantSet:
 
 			csq_fields = str(bcf_in.header.info[vep_csq_key].record)
 
-			csq_fields = csq_fields = csq_fields.strip()
+			csq_fields = csq_fields.strip()
 
 			index = csq_fields.index('Format:') + 8
 
@@ -326,6 +335,15 @@ class VariantSet:
 					else:
 						
 						gts.append(ref_and_alt[allele])
+
+
+				if len(gts) == 1 and (chrom == 'X' or chrom == 'Y'):
+
+					if family_member_id in self.family.get_male_family_members():
+						gts.append(gts[0])
+					else:
+						gts.append(gts[0])
+						print (f'Warning: A haploid genotype at position {pos} but this sample is female.')
 
 				if gts[0] == '.' and gts[1] == '.':
 
