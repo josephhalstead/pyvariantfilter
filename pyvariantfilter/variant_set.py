@@ -779,6 +779,183 @@ class VariantSet:
 		return variant_set_dict
 
 
+	def read_variants_from_sv_vcf(self, vcf_file, parse_csq=True, vep_csq_key='CSQ', proband_variants_only=True, filter_func=None, args=None):
+		"""
+		Read variants from a platypus VCF. Must have NR, NV and GQ fields in the Format section for each sample.
+
+		Input:
+
+			vcf_file: (String) Path to the VCF file to read.
+			parse_csq: (Boolean) Whether to attempt to parse the CSQ field added by VEP.
+			vep_csq_key: (String) The key of the CSQ field in the VCF INFO section.
+			proband_variants_only (Boolean) Only load variants which the proband has an alt allele.
+			import_filtered (Boolean) Whether to import variants which fail the VCF Filter
+
+		Returns:
+
+			None - loads variants into self.variant_dict
+
+		"""
+		valid_chroms = {'1': None, '2': None, '3': None, '4': None,
+		 '5': None, '6': None, '7': None, '8': None, '9': None,
+		 '10': None, '11': None, '12': None, '13': None,
+		 '14': None, '15': None, '16': None, '17': None,
+		 '18': None, '19': None, '20': None, '21': None,
+		 '22': None, 'X': None, 'Y': None, 'MT': None, 'M': None}
+
+		assert self.family != None
+
+		family_member_ids = self.family.get_all_family_member_ids()
+
+		if proband_variants_only == True:
+
+			proband_id = self.family.get_proband().get_id()
+
+		bcf_in = VariantFile(vcf_file)
+
+		if parse_csq == True:
+
+			csq_fields = str(bcf_in.header.info[vep_csq_key].record)
+
+			csq_fields = csq_fields.strip()
+
+			index = csq_fields.index('Format:') + 8
+
+			csq_fields = csq_fields[index:len(csq_fields)-2].split('|')
+
+		for rec in bcf_in.fetch():
+			
+			chrom = rec.chrom
+			pos = rec.pos
+			ref = rec.ref
+			alt = rec.alts
+			filter_status = rec.filter.keys()
+			info = rec.info
+			quality = rec.qual
+			end = rec.stop
+
+			# extras for svs
+			try:
+				length = info_dict['SVLEN']
+			except:
+				length = 0
+				
+			if length != 0:
+			
+				if type(length) == int:
+					
+					length = abs(length)
+					
+				else:
+					
+					length = abs(max(length))
 
 
 
+			info_dict = get_info_field_dict(info, vep_csq_key)
+
+			sv_type = info_dict.get('SVTYPE')
+
+			if 'chr' in chrom:
+
+				chrom = chrom.strip('chr')
+
+			# Chromosome is correct
+			if chrom not in valid_chroms:
+
+				print (f'{chrom} is not a valid chromosome. Not entered into variant set.')
+
+				continue
+			
+			assert len(alt) == 1
+
+			alt = alt[0]
+
+			if alt == '*':
+				continue
+
+			if parse_csq == True:
+
+				csq = rec.info[vep_csq_key]
+
+				transcript_annotations = parse_csq_field(csq, csq_fields)
+
+			new_variant = Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, filter_status=filter_status, quality=quality, vartype=sv_type, end=end)
+			new_variant.add_family(self.family)
+			new_variant.add_transcript_annotations(transcript_annotations)
+			new_variant.add_info_annotations(info_dict)
+
+			for family_member_id in family_member_ids:
+				
+				sample_genotype_data = rec.samples[family_member_id]
+
+				ref_and_alt = [ref, alt]
+
+				gts =[]
+
+				for allele in sample_genotype_data['GT']:
+
+					if allele == None:
+
+						gts.append('.')
+
+					else:
+
+						gts.append(ref_and_alt[allele])
+						
+
+				if len(gts) == 1 and (chrom == 'X' or chrom == 'Y'):
+
+					if family_member_id in self.family.get_male_family_members():
+						gts.append(gts[0])
+					else:
+						gts.append(gts[0])
+						print (f'Warning: A haploid genotype at position {pos} but this sample is female.')
+
+				if gts[0] == '.' and gts[1] == '.':
+
+					ads.append(0)
+					ads.append(0)
+	
+				# gq - if not present add very high value
+				try:
+					gq = sample_genotype_data['GQ']
+				except:
+					gq = 100000
+					
+				# ads - need to fake for this for sv as doesn't make sense
+				if gts.count(alt) == 0:
+					
+					ads = [10000,0]
+				
+				elif gts.count(alt) == 1:
+					
+					ads = [5000,5000]
+					
+				elif gts.count(alt) ==2:
+					
+					ads = [0,10000]
+				
+				# add fake depth as well
+				dp =1000
+
+				new_variant.add_genotype(family_member_id, gts, ads, gq, dp, extras=sample_genotype_data)
+
+			passes_filter = True
+
+			if filter_func != None and args != None:
+
+				passes_filter = filter_func(new_variant, *args)
+
+				assert passes_filter == True or passes_filter == False
+
+
+			if proband_variants_only == True:
+
+				if new_variant.has_alt(proband_id) == True and passes_filter == True:
+
+					self.add_variant(new_variant)
+
+			elif passes_filter == True:
+
+				self.add_variant(new_variant)

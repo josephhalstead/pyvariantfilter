@@ -3,7 +3,7 @@ import statistics
 
 class Variant:
 	
-	def __init__(self, chrom, pos, ref, alt, filter_status=None, quality=None):
+	def __init__(self, chrom, pos, ref, alt, filter_status=None, quality=None, vartype='snp', end=None):
 		
 		self.chrom = chrom
 		self.pos = pos
@@ -16,6 +16,8 @@ class Variant:
 		self.variant_id = f'{self.chrom}:{self.pos}{self.ref}>{self.alt}'
 		self.family = None
 		self.genotypes = {}
+		self.vartype = vartype
+		self.end = end
 
 		self.is_valid()
 			
@@ -28,7 +30,7 @@ class Variant:
 
 		Returns:
 
-			None
+		None
 
 		"""
 
@@ -55,7 +57,7 @@ class Variant:
 			raise ValueError('The Ref and Alt must be strings.')
 
 		 
-	def add_genotype(self, family_member_id, genotype, allele_depths, genome_quality, depth):
+	def add_genotype(self, family_member_id, genotype, allele_depths, genome_quality, depth, extras=None):
 		"""
 		Add a genotype to a Varaint object.
 
@@ -87,7 +89,8 @@ class Variant:
 		self.genotypes[family_member_id] = {'genotype': genotype,
 									'allele_depths': allele_depths,
 									'genotype_quality': genome_quality,
-									'depth': depth}
+									'depth': depth,
+									'extras': extras}
 		  
 	def add_family(self, family):
 		"""
@@ -2340,3 +2343,97 @@ class Variant:
 			return True	
 
 		return False
+
+	def get_var_type(self):
+		"""
+		Return variant type
+
+		"""
+		return self.vartype
+
+	def is_sv(self):
+		"""
+		Return whether the variant is a Structural Variant
+		"""
+
+		if self.get_var_type() != 'snp':
+
+			return True
+
+	def get_copy_number(self, family_member_id):
+		"""
+		Return the copy number from the genotype field
+		"""
+
+		if self.get_var_type() == 'snp':
+
+			return None
+
+		else:
+
+			try:
+
+				gt = self.genotypes[family_member_id]['extras']
+
+				return gt['CN']
+
+			except:
+
+				return None
+
+
+	def matches_copy_number_increase(self):
+		"""
+		For duplications - is the copy number increased in affected individuals?
+	
+		For dups where we have a copy number:
+
+		1) What is the max copy number in any unaffected?
+		2) Are all affected samples have a copy number greater than (1)
+
+		NB - not sure what happens with X and Y yet! May lead to false positives
+		
+		"""
+
+		# check variant is sv and has CN information
+
+		proband = self.family.get_proband()
+		proband_id = proband.get_id()
+
+		proband_cn = self.get_copy_number(proband_id)
+
+		if proband_cn is None:
+
+			return False
+
+		# Check that all unaffected are hom ref and not missing if they are return false
+		unaffected = self.family.get_unaffected_family_members()
+
+		max_unaffected_cn = -1
+				
+		for family_member_id in unaffected:
+					
+			family_member_cn = self.get_copy_number(family_member_id)
+
+			if family_member_cn is None:
+
+				raise Exception(f'No CN for {family_member_id} in {self.variant_id}')
+						
+			if family_member_cn > max_unaffected_cn:
+
+				max_unaffected_cn = family_member_cn
+
+		# check all affected have a higher cn than max_unaffected_cn
+
+		# Check that all unaffected are hom ref and not missing if they are return false
+		affected = self.family.get_affected_family_members()
+				
+		for family_member_id in affected:
+					
+			family_member_cn = self.get_copy_number(family_member_id)
+						
+			if family_member_cn <= max_unaffected_cn:
+
+				return False
+
+		return True

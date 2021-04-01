@@ -3516,6 +3516,115 @@ class TestFilterInfoAnnotation(unittest.TestCase):
 		self.assertEqual(gnomad_filt2, False)
 
 
+
+
+class TestCNVs(unittest.TestCase):
+
+
+	def test_matches_copy_number_increase_1(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+		variant = Variant(chrom='1', pos=1000, ref='N', alt='DUP',vartype='CNV', end=2000)
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['N', 'DUP'], [0, 1000], 99, 1000, extras={'CN': 3} )
+		variant.add_genotype('mum', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 2}  )
+		variant.add_genotype('dad', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 2}  )
+
+
+		self.assertEqual(variant.matches_copy_number_increase(), True)
+
+		
+
+	def test_matches_copy_number_increase_2(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+		variant = Variant(chrom='1', pos=1000, ref='N', alt='DUP',vartype='CNV', end=2000)
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['N', 'DUP'], [0, 1000], 99, 1000, extras={'CN': 8} )
+		variant.add_genotype('mum', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 1}  )
+		variant.add_genotype('dad', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 2}  )
+
+
+		self.assertEqual(variant.matches_copy_number_increase(), True)
+
+
+	def test_matches_copy_number_increase_3(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+		variant = Variant(chrom='1', pos=1000, ref='N', alt='DUP',vartype='CNV', end=2000)
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['N', 'DUP'], [0, 1000], 99, 1000, extras={'CN': 8} )
+		variant.add_genotype('mum', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 1}  )
+		variant.add_genotype('dad', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 2}  )
+
+
+		self.assertEqual(variant.matches_copy_number_increase(), True)
+
+	def test_matches_copy_number_increase_3(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+		variant = Variant(chrom='1', pos=1000, ref='N', alt='DUP',vartype='CNV', end=2000)
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['N', 'DUP'], [0, 1000], 99, 1000, extras={'CN': 1} )
+		variant.add_genotype('mum', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 2}  )
+		variant.add_genotype('dad', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 2}  )
+
+
+		self.assertEqual(variant.matches_copy_number_increase(), False)
+
+
+	def test_matches_copy_number_increase_3(self):
+
+		dad = FamilyMember('dad', 'FAM001', 1, False)
+		mum = FamilyMember('mum', 'FAM001', 2, False)
+		proband = FamilyMember('proband', 'FAM001', 1, True, dad=dad, mum=mum)
+		my_family = Family('FAM001')
+		my_family.add_family_member(dad)
+		my_family.add_family_member(mum)
+		my_family.add_family_member(proband)
+		my_family.set_proband(proband.get_id())
+		variant = Variant(chrom='1', pos=1000, ref='N', alt='DUP',vartype='CNV', end=2000)
+		variant.add_family(my_family)
+
+		variant.add_genotype('proband', ['N', 'DUP'], [0, 1000], 99, 1000, extras={'CN': 4} )
+		variant.add_genotype('mum', ['.', '.'], [12, 0], 99, 20, extras={'CN': 2}  )
+		variant.add_genotype('dad', ['N', 'N'], [12, 0], 99, 20, extras={'CN': 2}  )
+
+
+		self.assertEqual(variant.matches_copy_number_increase(), True)
+
 if __name__ == '__main__':
 	unittest.main()
 
